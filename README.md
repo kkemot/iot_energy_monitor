@@ -1,5 +1,5 @@
 # IOT Energy monitor
-Simple module based on open hardware devices.
+Simple module based on open hardware devices: PZEM004T and ESP8266.
 
 # Requirements
 - Arduino tool

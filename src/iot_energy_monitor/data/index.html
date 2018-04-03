@@ -1,0 +1,48 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Smart Home Module</title>
+</head>
+
+<body>
+    <h3>IP Addresses:</h3>
+    <p>My STA IP: {wifi_staip}
+    <p>My AP IP: {wifi_apip}
+    <hr/>
+    <form action="/save" method=POST>
+      <h3>Device configuration:</h3>
+      WIFI SSID:
+      <input type="text" name="ssid_sta" value="{ssid_sta}"><BR>
+      WIFI PASS:
+      <input type="text" name="pass_sta" value="{pass_sta}"><BR>
+      WIFI AP SSID:
+      <input type="text" name="ssid_ap" value="{ssid_ap}"><BR>
+      WIFI AP PASS:
+      <input type="text" name="pass_ap" value="{pass_ap}"><BR>
+      ThingSpeak API write-key:
+      <input type="text" name="ts_api_key" value="{ts_api_key}"><BR>
+      Sleep time in s (min 60):
+      <input type="text" name="sleep_time" value="{sleep_time}"><BR>
+      <div>
+      WiFi mode:
+          <input type="radio" id="modeChoice0" name="wifi_mode" value="0" {wifi_mode0}>
+          <label for="modeChoice0">AP+STA</label>
+          <input type="radio" id="modeChoice1" name="wifi_mode" value="1" {wifi_mode1}>
+          <label for="modeChoice1">STA</label>
+          <input type="radio" id="modeChoice2" name="wifi_mode" value="2" {wifi_mode2}>
+          <label for="modeChoice2">STA(Low power mode)</label>
+          <input type="radio" id="modeChoice3" name="wifi_mode" value="3" {wifi_mode3}>
+          <label for="modeChoice2">OFF</label>
+      </div>
+      <hr/>
+      <input type="submit" value="Save">
+    </form>
+
+    <form action="/restart" method=POST>
+      <input type="submit" value="Restart">
+    </form>
+
+</body>
+</html>
