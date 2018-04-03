@@ -29,3 +29,6 @@
 #define LED_ON      LOW
 #define LED_OFF     HIGH
 
+//Power monitor
+#define POWER_MONITOR_1_TX 13
+#define POWER_MONITOR_1_RX 14
