@@ -12,7 +12,7 @@
     <p>My AP IP: {wifi_apip}
     <hr/>
     <form action="/save" method=POST>
-      <h3>Device configuration:</h3>
+      <h3>Device network configuration:</h3>
       WIFI SSID:
       <input type="text" name="ssid_sta" value="{ssid_sta}"><BR>
       WIFI PASS:
@@ -21,10 +21,6 @@
       <input type="text" name="ssid_ap" value="{ssid_ap}"><BR>
       WIFI AP PASS:
       <input type="text" name="pass_ap" value="{pass_ap}"><BR>
-      ThingSpeak API write-key:
-      <input type="text" name="ts_api_key" value="{ts_api_key}"><BR>
-      Sleep time in s (min 60):
-      <input type="text" name="sleep_time" value="{sleep_time}"><BR>
       <div>
       WiFi mode:
           <input type="radio" id="modeChoice0" name="wifi_mode" value="0" {wifi_mode0}>
@@ -37,9 +33,33 @@
           <label for="modeChoice2">OFF</label>
       </div>
       <hr/>
+      <h3>Data sinks:</h3>
+      Sampling interval (min 15s):
+      <input type="text" name="sleep_time" value="{sleep_time}"><BR>
+      *ThingSpeak: API write-key:
+      <input type="text" name="ts_api_key" value="{ts_api_key}"><BR>
+      *InfuxDB: server address:
+      <input type="text" name="influxdb_server_address" value="{influxdb_server_address}"><BR>
+      InfuxDB: server port:
+      <input type="text" name="influxdb_server_port" value="{influxdb_server_port}"><BR>
+      InfuxDB: user:
+      <input type="text" name="influxdb_user" value="{influxdb_user}"><BR>
+      InfuxDB: password:
+      <input type="text" name="influxdb_pass" value="{influxdb_pass}"><BR>
+      InfuxDB: DB name:
+      <input type="text" name="influxdb_db_name" value="{influxdb_db_name}"><BR>
+      InfuxDB: series name:
+      <input type="text" name="influxdb_series_name" value="{influxdb_series_name}"><BR>
+      InfuxDB: location TAG:
+      <input type="text" name="influxdb_location_tag" value="{influxdb_location_tag}"><BR>
+      InfuxDB: type TAG:
+      <input type="text" name="influxdb_type_tag" value="{influxdb_type_tag}"><BR>
+      InfuxDB: nodeId TAG:
+      <input type="text" name="influxdb_nodeid_tag" value="{influxdb_nodeid_tag}"><BR>
+      <h6>* leave empty field if you don't want to use this option.</h6>
+      <hr/>
       <input type="submit" value="Save">
     </form>
-
     <form action="/restart" method=POST>
       <input type="submit" value="Restart">
     </form>

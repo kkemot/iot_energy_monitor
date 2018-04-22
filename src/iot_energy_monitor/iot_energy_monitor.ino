@@ -4,14 +4,18 @@
 #include "webServer.h"
 #include "sensors.h"
 #include <PZEM004T.h>
+#include <ESPinfluxdb.h>
 
 WiFiClient client;
 extern struct Settings settings;
 
 PZEM004T pzem(POWER_MONITOR_1_RX,POWER_MONITOR_1_TX);  // (RX,TX) connect to TX,RX of PZEM
 IPAddress ip(192,168,1,1);
+bool pzemrdy = false;
 
 void heartBeatModulation(uint32_t time_counter);
+void send_data_InfluxDB(float data_1, float data_2);
+void send_data_ThingSpeak(float data_1, float data_2);
 
 void setup() {
   int button_cnt = 0;
@@ -75,6 +79,12 @@ void setup() {
 
   init_sensors();
   pzem.setAddress(ip);
+
+     while (!pzemrdy) {
+      Serial.println("Connecting to PZEM...");
+      pzemrdy = pzem.setAddress(ip);
+      delay(1000);
+   }
 }
 
 uint32_t counter = 0;
@@ -91,16 +101,20 @@ void loop() {
     Serial.println(counter,DEC);
 
     float v = pzem.voltage(ip);
-    if (v < 0.0) v = 0.0;
+    //if (v < 0.0) v = 0.0;
     Serial.print(v);Serial.print("V; ");
-
+delay(500);
     float i = pzem.current(ip);
-    if(i >= 0.0){ Serial.print(i);Serial.print("A; "); }
-
+    //if(i >= 0.0)
+    { Serial.print(i);Serial.print("A; "); }
+delay(500);
     float p = pzem.power(ip);
-    if(p >= 0.0){ Serial.print(p);Serial.print("W; "); }
+    //if(p >= 0.0)
+    { Serial.print(p);Serial.print("W; "); }
     float e = pzem.energy(ip);
-    if(e >= 0.0){ Serial.print(e);Serial.print("Wh; "); }
+delay(500);
+    //if(e >= 0.0)
+    { Serial.print(e);Serial.print("Wh; "); }
     Serial.println();
   }
 
@@ -131,7 +145,6 @@ void loop() {
   }
 
 }
-
 
 void send_data_ThingSpeak(float data_1, float data_2, float data_3, float data_4) {
   char temp[20];
@@ -166,6 +179,45 @@ void send_data_ThingSpeak(float data_1, float data_2, float data_3, float data_4
     Serial.println("Sent to Thingspeak.");
   }
   client.stop();
+}
+
+void send_data_InfluxDB(float data_1, float data_2) {
+  char temp[20];
+  // There is no server address
+  if(strlen(settings.influxdb_server_address) == 0) {
+    Serial.println("UNKNOW InfluxDB server - skipped data sending to database");
+    return;
+  }
+
+  Influxdb influxdb(settings.influxdb_server_address, settings.influxdb_server_port);
+
+  if (settings.influxdb_user != "" &&  settings.influxdb_pass != "") {
+      if (influxdb.configure(settings.influxdb_db_name, settings.influxdb_user, settings.influxdb_pass)) {
+        Serial.println("Opend database failed");
+      }
+  }
+  else {
+    if (influxdb.configure(settings.influxdb_db_name)!=DB_SUCCESS) {
+      Serial.println("Opend database failed");
+    }
+  }
+
+  // Create data object: series,tag=ta1,tag=tag2,tag=tag3 value=1.0, value=2.0
+  dbMeasurement row(settings.influxdb_series_name);
+  row.addTag("module", settings.influxdb_type_tag);       // Add type: electrometer, envirement sensor, watermeter
+  row.addTag("location", settings.influxdb_location_tag); // Add location: wroclaw
+  row.addTag("id", settings.influxdb_nodeid_tag); // Add id: module name -> "light" / "kitchen"
+
+  sprintf(temp,"%.1f", data_1);
+  row.addField("temperature", temp); // Add value field
+  sprintf(temp,"%.0f", data_2);
+  row.addField("humidity", temp); // Add random value
+
+  Serial.println(influxdb.write(row) == DB_SUCCESS ? "Object write success"
+                 : "Writing failed");
+
+  //Empty field object.
+  row.empty();
 }
 
 //changes LED state

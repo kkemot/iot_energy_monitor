@@ -48,6 +48,16 @@ void handle_root(void)
     s.replace("{wifi_mode3}", "checked");
   }
 
+  s.replace("{influxdb_server_address}", settings.influxdb_server_address);
+  s.replace("{influxdb_server_port}", String(settings.influxdb_server_port));
+  s.replace("{influxdb_user}", settings.influxdb_user);
+  s.replace("{influxdb_pass}", settings.influxdb_pass);
+  s.replace("{influxdb_db_name}", settings.influxdb_db_name);
+  s.replace("{influxdb_series_name}", settings.influxdb_series_name);
+  s.replace("{influxdb_location_tag}", settings.influxdb_location_tag);
+  s.replace("{influxdb_type_tag}", settings.influxdb_type_tag);
+  s.replace("{influxdb_nodeid_tag}", settings.influxdb_nodeid_tag);
+
   server.send(200, "text/html", s.c_str());
 }
 
@@ -70,8 +80,7 @@ static void handle_save(void)
 
   if (!server.hasArg("ssid_sta") || !server.hasArg("pass_sta") ||
     !server.hasArg("ssid_ap") || !server.hasArg("pass_ap") ||
-    !server.hasArg("ts_api_key") || !server.hasArg("sleep_time") ||
-    !server.hasArg("wifi_mode")) {
+    !server.hasArg("sleep_time") || !server.hasArg("wifi_mode")) {
     server.send(500, "text/plain", "Bad form");
   }
 
@@ -91,7 +100,7 @@ static void handle_save(void)
   settings.ts_api_key = strdup(val.c_str());
 
   val = server.arg("sleep_time");
-  if (atoi(val.c_str()) > 19) {
+  if (atoi(val.c_str()) >= 15) {
     settings.sleep_time = atoi(val.c_str());
   }
 
@@ -99,6 +108,35 @@ static void handle_save(void)
   if (atoi(val.c_str()) >= 0 && atoi(val.c_str()) <= 3) {
     settings.wifi_mode = atoi(val.c_str());
   }
+
+  val = server.arg("influxdb_server_address");
+  settings.influxdb_server_address = strdup(val.c_str());
+
+  val = server.arg("influxdb_server_port");
+  if (atoi(val.c_str()) >= 0) {
+    settings.influxdb_server_port = atoi(val.c_str());
+  }
+
+  val = server.arg("influxdb_user");
+  settings.influxdb_user = strdup(val.c_str());
+
+  val = server.arg("influxdb_pass");
+  settings.influxdb_pass = strdup(val.c_str());
+
+  val = server.arg("influxdb_db_name");
+  settings.influxdb_db_name = strdup(val.c_str());
+
+  val = server.arg("influxdb_series_name");
+  settings.influxdb_series_name = strdup(val.c_str());
+
+  val = server.arg("influxdb_location_tag");
+  settings.influxdb_location_tag = strdup(val.c_str());
+
+  val = server.arg("influxdb_type_tag");
+  settings.influxdb_type_tag = strdup(val.c_str());
+
+  val = server.arg("influxdb_nodeid_tag");
+  settings.influxdb_nodeid_tag = strdup(val.c_str());
 
   save_settings();
   server.sendHeader("Location", "/");
