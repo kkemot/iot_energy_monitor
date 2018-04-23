@@ -151,26 +151,36 @@ bool load_settings(void)
     tmp = json["ssid_sta"];
     if (tmp) {
       settings.ssid_sta = strdup(tmp);
+    } else {
+      settings.ssid_sta = strdup("");
     }
 
     tmp = json["pass_sta"];
     if (tmp) {
       settings.pass_sta = strdup(tmp);
+    } else {
+      settings.pass_sta = strdup("");
     }
 
     tmp = json["ssid_ap"];
     if (tmp) {
       settings.ssid_ap = strdup(tmp);
+    } else {
+      settings.ssid_ap = strdup("");
     }
 
     tmp = json["pass_ap"];
     if (tmp) {
       settings.pass_ap = strdup(tmp);
+    } else {
+      settings.pass_ap = strdup("");
     }
 
     tmp = json["ts_api_key"];
     if (tmp) {
       settings.ts_api_key = strdup(tmp);
+    }  else {
+      settings.ts_api_key = strdup("");
     }
 
     tmp = json["sleep_time"];
@@ -192,6 +202,8 @@ bool load_settings(void)
     tmp = json["influxdb_server_address"];
     if (tmp) {
       settings.influxdb_server_address = strdup(tmp);
+    } else {
+      settings.influxdb_server_address = strdup("");
     }
 
     tmp = json["influxdb_server_port"];
@@ -202,36 +214,50 @@ bool load_settings(void)
     tmp = json["influxdb_user"];
     if (tmp) {
       settings.influxdb_user = strdup(tmp);
+    } else {
+      settings.influxdb_user = strdup("");
     }
 
     tmp = json["influxdb_pass"];
     if (tmp) {
       settings.influxdb_pass = strdup(tmp);
+    } else {
+      settings.influxdb_pass = strdup("");
     }
 
     tmp = json["influxdb_db_name"];
     if (tmp) {
       settings.influxdb_db_name = strdup(tmp);
+    } else {
+      settings.influxdb_db_name = strdup("");
     }
 
     tmp = json["influxdb_series_name"];
     if (tmp) {
       settings.influxdb_series_name = strdup(tmp);
+    } else {
+      settings.influxdb_series_name = strdup("");
     }
 
     tmp = json["influxdb_location_tag"];
     if (tmp) {
       settings.influxdb_location_tag = strdup(tmp);
+    } else {
+      settings.influxdb_location_tag = strdup("");
     }
 
     tmp = json["influxdb_type_tag"];
     if (tmp) {
       settings.influxdb_type_tag = strdup(tmp);
+    } else {
+      settings.influxdb_type_tag = strdup("");
     }
 
     tmp = json["influxdb_nodeid_tag"];
     if (tmp) {
       settings.influxdb_nodeid_tag = strdup(tmp);
+    } else {
+      settings.influxdb_nodeid_tag = strdup("");
     }
   }
   ret = true;

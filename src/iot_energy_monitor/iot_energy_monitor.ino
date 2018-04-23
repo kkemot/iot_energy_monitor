@@ -88,7 +88,7 @@ void setup() {
 
   init_sensors();
   pzem.setAddress(ip);
-  pzem.setReadTimeout(100);
+  pzem.setReadTimeout(1000);
 
 //     while (!pzemrdy) {
 //      Serial.println("Connecting to PZEM...");
@@ -118,15 +118,14 @@ void loop() {
 
   if (counter == 0) {
     energyMeter_clearBuffers();
-    if (counter%10  == 0) {
-      energyMeter_read();
-    }
   }
-  else if (counter  < (settings.sleep_time * 10)) {
+  //do not read value for first 4s, let to display blink code
+  else if ((counter  >= 40) && (counter  < (settings.sleep_time * 10))) {
     if (counter%10  == 0) {
       energyMeter_read();
+      //counter += 40;
     }
-  } else if (counter  == (settings.sleep_time * 10)) {
+  } else if (counter  >= (settings.sleep_time * 10)) {
 
     Serial.println("Send data to databases");
     //sent data do databases
@@ -159,7 +158,7 @@ void loop() {
   }
 
   counter++;
-  if (counter > (settings.sleep_time * 10)) {
+  if (counter  > ((settings.sleep_time * 10) + 50 )) {
     counter = 0;
   }
 
@@ -209,6 +208,20 @@ void send_data_ThingSpeak(float data_1, float data_2, float data_3, float data_4
 void send_data_InfluxDB(float data_1, float data_2, float data_3, float data_4) {
   char temp[20];
 
+  dbMeasurement rowT(settings.influxdb_series_name);
+  sprintf(temp,"%.1f", data_1);
+  rowT.addField("V", temp); // Add value field
+  sprintf(temp,"%.1f", data_2);
+  rowT.addField("I", temp); // Add value field
+  sprintf(temp,"%.1f", data_3);
+  rowT.addField("P", temp); // Add value field
+  sprintf(temp,"%.1f", data_4);
+  rowT.addField("E", temp); // Add value field
+
+  Serial.print("InfluxDB row=");
+  Serial.println(rowT.postString());
+
+
   // There is no server address
   if(strlen(settings.influxdb_server_address) == 0) {
     Serial.println("UNKNOW InfluxDB server - skipped data sending to database");
@@ -245,7 +258,8 @@ void send_data_InfluxDB(float data_1, float data_2, float data_3, float data_4) 
 
   Serial.println(influxdb.write(row) == DB_SUCCESS ? "Object write success"
                  : "Writing failed");
-
+  Serial.print("InfluxDB row=");
+  Serial.println(row.postString());
   //Empty field object.
   row.empty();
 }
@@ -325,25 +339,36 @@ void energyMeter_clearBuffers(void) {
 
 void energyMeter_read(void) {
     Serial.println("Read V,I,P,E");
-    float v = pzem.voltage(ip);
+    float v, i, p, e;
+    v = pzem.voltage(ip);
     if (v >= 0.0) {
       filter_voltage.add(v);
     }
 
-    float i = pzem.current(ip);
+    i = pzem.current(ip);
     if (i >= 0.0) {
       filter_current.add(i);
     }
 
-    float p = pzem.power(ip);
+    p = pzem.power(ip);
     if (p >= 0.0) {
       filter_power.add(p);
     }
 
-    float e = pzem.energy(ip);
+    e = pzem.energy(ip);
     if (e >= 0.0) {
       filter_energy.add(e);
     }
+
+    Serial.print("V= ");
+    Serial.print(v);
+    Serial.print(", I= ");
+    Serial.print(i);
+    Serial.print(", P= ");
+    Serial.print(p);
+    Serial.print(", E= ");
+    Serial.println(e);
+
 }
 
 
