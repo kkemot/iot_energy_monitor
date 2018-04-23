@@ -3,6 +3,7 @@
 #include "settings.h"
 #include "webServer.h"
 #include "sensors.h"
+#include "filters.h"
 #include <PZEM004T.h>
 #include <ESPinfluxdb.h>
 
@@ -13,9 +14,17 @@ PZEM004T pzem(POWER_MONITOR_1_RX,POWER_MONITOR_1_TX);  // (RX,TX) connect to TX,
 IPAddress ip(192,168,1,1);
 bool pzemrdy = false;
 
+//energy meter
+int filter_size = 0;
+simpleFilter filter_voltage;
+simpleFilter filter_current;
+simpleFilter filter_power;
+simpleFilter filter_energy;
+
+
 void heartBeatModulation(uint32_t time_counter);
-void send_data_InfluxDB(float data_1, float data_2);
-void send_data_ThingSpeak(float data_1, float data_2);
+void send_data_InfluxDB(float data_1, float data_2, float data_3, float data_4);
+void send_data_ThingSpeak(float data_1, float data_2, float data_3, float data_4);
 
 void setup() {
   int button_cnt = 0;
@@ -79,12 +88,22 @@ void setup() {
 
   init_sensors();
   pzem.setAddress(ip);
+  pzem.setReadTimeout(100);
 
-     while (!pzemrdy) {
-      Serial.println("Connecting to PZEM...");
-      pzemrdy = pzem.setAddress(ip);
-      delay(1000);
-   }
+//     while (!pzemrdy) {
+//      Serial.println("Connecting to PZEM...");
+//      pzemrdy = pzem.setAddress(ip);
+//      delay(1000);
+//   }
+
+  filter_size = (settings.sleep_time * SAMPLING_WINDOW_SIZE) / 100;
+  Serial.print("Filter size is:");
+  Serial.println(filter_size);
+
+  filter_voltage.setFilterSize(filter_size);
+  filter_current.setFilterSize(filter_size);
+  filter_power.setFilterSize(filter_size);
+  filter_energy.setFilterSize(filter_size);
 }
 
 uint32_t counter = 0;
@@ -96,47 +115,47 @@ void loop() {
   handleApConfigurator();
   heartBeatModulation(counter);
 
-  if (counter%10  == 0) {
-    Serial.print("counter = ");
-    Serial.println(counter,DEC);
-
-    float v = pzem.voltage(ip);
-    //if (v < 0.0) v = 0.0;
-    Serial.print(v);Serial.print("V; ");
-delay(500);
-    float i = pzem.current(ip);
-    //if(i >= 0.0)
-    { Serial.print(i);Serial.print("A; "); }
-delay(500);
-    float p = pzem.power(ip);
-    //if(p >= 0.0)
-    { Serial.print(p);Serial.print("W; "); }
-    float e = pzem.energy(ip);
-delay(500);
-    //if(e >= 0.0)
-    { Serial.print(e);Serial.print("Wh; "); }
-    Serial.println();
-  }
 
   if (counter == 0) {
-
-  }
-  else if(counter < (SENSOR_WARMING_TIME * 10)) {
-
-  } else if (counter  == (SENSOR_WARMING_TIME * 10)) {
-    //sent to ThinkSpeak
-    //if (isConnectedSTA()) {
-      //send_data_ThingSpeak(f1, f2, f3, f4);
-    //}
-  } else {
-    if (settings.wifi_mode == 2) { //Sleep mode -> wifi mode: 2 - WIFI_STA_DEEP_SLEEP;
-      uint32_t sleep_time = settings.sleep_time - SENSOR_WARMING_TIME;
-      Serial.print("sleep = ");
-      Serial.println(sleep_time,DEC);
-      ESP.deepSleep(sleep_time * 1000000);
-    } else {
-      //Serial.println("wait...");
+    energyMeter_clearBuffers();
+    if (counter%10  == 0) {
+      energyMeter_read();
     }
+  }
+  else if (counter  < (settings.sleep_time * 10)) {
+    if (counter%10  == 0) {
+      energyMeter_read();
+    }
+  } else if (counter  == (settings.sleep_time * 10)) {
+
+    Serial.println("Send data to databases");
+    //sent data do databases
+    if (isConnectedSTA()) {
+
+      float v, i, p, e;
+
+      Serial.print("filter_voltage size = ");
+      Serial.println(filter_voltage.getNumSamples(), DEC);
+      Serial.print("filter_current size = ");
+      Serial.println(filter_current.getNumSamples(), DEC);
+      Serial.print("filter_power size = ");
+      Serial.println(filter_power.getNumSamples(), DEC);
+      Serial.print("filter_energy size = ");
+      Serial.println(filter_energy.getNumSamples(), DEC);
+
+      v = filter_voltage.get();
+      i = filter_current.get();
+      p = filter_power.get();
+      e = filter_energy.get();
+
+      send_data_ThingSpeak(v, i, p, e);
+      send_data_InfluxDB(v, i, p, e);
+    }
+  }
+
+  if (counter%10  == 0) {
+    Serial.print("timer = ");
+    Serial.println(counter/10, DEC);
   }
 
   counter++;
@@ -148,6 +167,12 @@ delay(500);
 
 void send_data_ThingSpeak(float data_1, float data_2, float data_3, float data_4) {
   char temp[20];
+
+  // There is no API KEY
+  if(strlen(settings.ts_api_key) == 0) {
+    Serial.println("NO API KEY - skipped data sending to ThingSpeak");
+    return;
+  }
 
   if (client.connect(TS_SERVER_NAME,80)) {
     String API_KEY = settings.ts_api_key;
@@ -181,8 +206,9 @@ void send_data_ThingSpeak(float data_1, float data_2, float data_3, float data_4
   client.stop();
 }
 
-void send_data_InfluxDB(float data_1, float data_2) {
+void send_data_InfluxDB(float data_1, float data_2, float data_3, float data_4) {
   char temp[20];
+
   // There is no server address
   if(strlen(settings.influxdb_server_address) == 0) {
     Serial.println("UNKNOW InfluxDB server - skipped data sending to database");
@@ -209,9 +235,13 @@ void send_data_InfluxDB(float data_1, float data_2) {
   row.addTag("id", settings.influxdb_nodeid_tag); // Add id: module name -> "light" / "kitchen"
 
   sprintf(temp,"%.1f", data_1);
-  row.addField("temperature", temp); // Add value field
-  sprintf(temp,"%.0f", data_2);
-  row.addField("humidity", temp); // Add random value
+  row.addField("V", temp); // Add value field
+  sprintf(temp,"%.1f", data_2);
+  row.addField("I", temp); // Add value field
+  sprintf(temp,"%.1f", data_3);
+  row.addField("P", temp); // Add value field
+  sprintf(temp,"%.1f", data_4);
+  row.addField("E", temp); // Add value field
 
   Serial.println(influxdb.write(row) == DB_SUCCESS ? "Object write success"
                  : "Writing failed");
@@ -284,4 +314,38 @@ void heartBeatModulation(uint32_t time_counter) {
       digitalWrite(LED_PIN, LED_OFF);
   }
 }
+
+void energyMeter_clearBuffers(void) {
+  Serial.println("Clear energy buffers");
+  filter_voltage.clear();
+  filter_current.clear();
+  filter_power.clear();
+  filter_energy.clear();
+}
+
+void energyMeter_read(void) {
+    Serial.println("Read V,I,P,E");
+    float v = pzem.voltage(ip);
+    if (v >= 0.0) {
+      filter_voltage.add(v);
+    }
+
+    float i = pzem.current(ip);
+    if (i >= 0.0) {
+      filter_current.add(i);
+    }
+
+    float p = pzem.power(ip);
+    if (p >= 0.0) {
+      filter_power.add(p);
+    }
+
+    float e = pzem.energy(ip);
+    if (e >= 0.0) {
+      filter_energy.add(e);
+    }
+}
+
+
+
 
