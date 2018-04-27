@@ -1,10 +1,10 @@
 #pragma once
 
-// Filtering window [%]:
-// example for: 75%
-// sampling/sleep time: 60s
-// filter window takes 75% of this time: 45s
-#define SAMPLING_WINDOW_SIZE 75
+// Sampling time takes 3-4s,
+// min time for sampling delay is 15s
+// so we  get 3 samples from sensors
+// 15/4 -> 3 samples sampling rate ~20% (3samples for 15s)
+#define SAMPLING_RATE 20
 
 void init_sensors(void);
 

@@ -19,12 +19,13 @@ int filter_size = 0;
 simpleFilter filter_voltage;
 simpleFilter filter_current;
 simpleFilter filter_power;
-simpleFilter filter_energy;
-
 
 void heartBeatModulation(uint32_t time_counter);
-void send_data_InfluxDB(float data_1, float data_2, float data_3, float data_4);
-void send_data_ThingSpeak(float data_1, float data_2, float data_3, float data_4);
+void send_data_InfluxDB(float data_1, float data_2, float data_3);
+void send_data_ThingSpeak(float data_1, float data_2, float data_3);
+
+void energyMeter_read(void);
+void energyMeter_clearBuffers(void);
 
 void setup() {
   int button_cnt = 0;
@@ -96,18 +97,20 @@ void setup() {
 //      delay(1000);
 //   }
 
-  filter_size = (settings.sleep_time * SAMPLING_WINDOW_SIZE) / 100;
+  filter_size = (settings.sleep_time * SAMPLING_RATE) / 100;
   Serial.print("Filter size is:");
   Serial.println(filter_size);
 
   filter_voltage.setFilterSize(filter_size);
   filter_current.setFilterSize(filter_size);
   filter_power.setFilterSize(filter_size);
-  filter_energy.setFilterSize(filter_size);
+  energyMeter_clearBuffers();
 }
 
-uint32_t counter = 0;
 void loop() {
+  static uint32_t counter = 0;
+  static uint32_t counter_seconds = 0;
+  static int counter_upload_delay = settings.sleep_time;
 
   delay(100);
 
@@ -115,23 +118,13 @@ void loop() {
   handleApConfigurator();
   heartBeatModulation(counter);
 
-
-  if (counter == 0) {
-    energyMeter_clearBuffers();
-  }
-  //do not read value for first 4s, let to display blink code
-  else if ((counter  >= 40) && (counter  < (settings.sleep_time * 10))) {
-    if (counter%10  == 0) {
-      energyMeter_read();
-      //counter += 40;
-    }
-  } else if (counter  >= (settings.sleep_time * 10)) {
+  if (counter_upload_delay <= 0) {
+    counter_upload_delay = settings.sleep_time;
 
     Serial.println("Send data to databases");
-    //sent data do databases
     if (isConnectedSTA()) {
 
-      float v, i, p, e;
+      float v, i, p;
 
       Serial.print("filter_voltage size = ");
       Serial.println(filter_voltage.getNumSamples(), DEC);
@@ -139,32 +132,49 @@ void loop() {
       Serial.println(filter_current.getNumSamples(), DEC);
       Serial.print("filter_power size = ");
       Serial.println(filter_power.getNumSamples(), DEC);
-      Serial.print("filter_energy size = ");
-      Serial.println(filter_energy.getNumSamples(), DEC);
 
       v = filter_voltage.get();
       i = filter_current.get();
       p = filter_power.get();
-      e = filter_energy.get();
 
-      send_data_ThingSpeak(v, i, p, e);
-      send_data_InfluxDB(v, i, p, e);
+      send_data_ThingSpeak(v, i, p);
+      send_data_InfluxDB(v, i, p);
     }
-  }
 
-  if (counter%10  == 0) {
-    Serial.print("timer = ");
-    Serial.println(counter/10, DEC);
+    energyMeter_clearBuffers();
   }
 
   counter++;
-  if (counter  > ((settings.sleep_time * 10) + 50 )) {
-    counter = 0;
-  }
+  if (counter%10  == 0) {
+      counter_seconds += 1;
+      counter_upload_delay -= 1;
 
+      //calculate measure time slot
+      int _start_time = (counter_seconds) % 30;
+      int _end_time = (counter_seconds+3) % 30;
+
+      //slot time for blinking code
+      if ((_start_time >= 4) && (_end_time >= 4)) {
+        Serial.println("out of blink time slot");
+        energyMeter_read();
+        counter_upload_delay -= 3;
+        counter_seconds += 3;
+        counter += 30;
+      }
+      else {
+        Serial.println("in blink time slot");
+      }
+
+    Serial.print("counter=");
+    Serial.print(counter, DEC);
+    Serial.print(", count_sec=");
+    Serial.print(counter_seconds, DEC);
+    Serial.print(", upload_delayc=");
+    Serial.println(counter_upload_delay, DEC);
+  }
 }
 
-void send_data_ThingSpeak(float data_1, float data_2, float data_3, float data_4) {
+void send_data_ThingSpeak(float data_1, float data_2, float data_3) {
   char temp[20];
 
   // There is no API KEY
@@ -185,9 +195,6 @@ void send_data_ThingSpeak(float data_1, float data_2, float data_3, float data_4
     postStr +="&field3=";
     sprintf(temp,"%.1f", data_3);
     postStr += String(temp);
-    postStr +="&field4=";
-    sprintf(temp,"%.1f", data_4);
-    postStr += String(temp);
     postStr += "\r\n\r\n";
 
     client.print("POST /update HTTP/1.1\n");
@@ -205,7 +212,7 @@ void send_data_ThingSpeak(float data_1, float data_2, float data_3, float data_4
   client.stop();
 }
 
-void send_data_InfluxDB(float data_1, float data_2, float data_3, float data_4) {
+void send_data_InfluxDB(float data_1, float data_2, float data_3) {
   char temp[20];
 
   dbMeasurement rowT(settings.influxdb_series_name);
@@ -215,8 +222,6 @@ void send_data_InfluxDB(float data_1, float data_2, float data_3, float data_4) 
   rowT.addField("I", temp); // Add value field
   sprintf(temp,"%.1f", data_3);
   rowT.addField("P", temp); // Add value field
-  sprintf(temp,"%.1f", data_4);
-  rowT.addField("E", temp); // Add value field
 
   Serial.print("InfluxDB row=");
   Serial.println(rowT.postString());
@@ -253,8 +258,6 @@ void send_data_InfluxDB(float data_1, float data_2, float data_3, float data_4) 
   row.addField("I", temp); // Add value field
   sprintf(temp,"%.1f", data_3);
   row.addField("P", temp); // Add value field
-  sprintf(temp,"%.1f", data_4);
-  row.addField("E", temp); // Add value field
 
   Serial.println(influxdb.write(row) == DB_SUCCESS ? "Object write success"
                  : "Writing failed");
@@ -267,7 +270,7 @@ void send_data_InfluxDB(float data_1, float data_2, float data_3, float data_4) 
 //changes LED state
 void heartBeatModulation(uint32_t time_counter) {
   WiFiMode_t currentWiFiMode = getWiFiMode();
-  int time_stamp = time_counter % 100;
+  int time_stamp = time_counter % 300;
 
   if (currentWiFiMode == WIFI_AP_STA) {
     if (time_stamp == 0)
@@ -334,12 +337,11 @@ void energyMeter_clearBuffers(void) {
   filter_voltage.clear();
   filter_current.clear();
   filter_power.clear();
-  filter_energy.clear();
 }
 
 void energyMeter_read(void) {
-    Serial.println("Read V,I,P,E");
-    float v, i, p, e;
+    Serial.println("Read V,I,P");
+    float v, i, p;
     v = pzem.voltage(ip);
     if (v >= 0.0) {
       filter_voltage.add(v);
@@ -355,20 +357,12 @@ void energyMeter_read(void) {
       filter_power.add(p);
     }
 
-    e = pzem.energy(ip);
-    if (e >= 0.0) {
-      filter_energy.add(e);
-    }
-
     Serial.print("V= ");
     Serial.print(v);
     Serial.print(", I= ");
     Serial.print(i);
     Serial.print(", P= ");
-    Serial.print(p);
-    Serial.print(", E= ");
-    Serial.println(e);
-
+    Serial.println(p);
 }
 
 
