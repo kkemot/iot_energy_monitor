@@ -9,3 +9,4 @@ void handleApConfigurator(void);
 bool isConnectedSTA(void);
 WiFiMode_t getWiFiMode(void);
 void reconnectLastMode(void);
+

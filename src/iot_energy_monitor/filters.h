@@ -13,3 +13,4 @@ public:
   float get(void);
   int getNumSamples(void);
 };
+

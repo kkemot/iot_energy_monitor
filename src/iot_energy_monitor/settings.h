@@ -25,7 +25,6 @@ struct Settings {
     char *influxdb_location_tag;
     char *influxdb_type_tag;
     char *influxdb_nodeid_tag;
-
 };
 
 bool load_settings(void);
@@ -34,3 +33,4 @@ void set_default_settings(void);
 void print_settings(void);
 
 void init_file_system(void);
+

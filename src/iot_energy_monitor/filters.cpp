@@ -1,3 +1,4 @@
+#include <ESP8266WiFi.h>
 #include <list>
 using namespace std;
 #include "filters.h"
@@ -37,7 +38,7 @@ float simpleFilter::get(void) {
   }
   else {
     int lowLimit = (30*filter_size)/100 ;
-    int maxLimit = (70*filter_size)/100;
+    int maxLimit = ((70*filter_size)/100)+1;
     float sum = 0;
 
     list<float> tempList(List);
@@ -51,7 +52,7 @@ float simpleFilter::get(void) {
     //cut max limit
     for (int i = maxLimit; i< filter_size; i++) {
         tempList.pop_back();
-      }
+    }
 
       for (list<float>::iterator it = tempList.begin(); it != tempList.end(); it++)
         sum += *it;
@@ -60,3 +61,4 @@ float simpleFilter::get(void) {
       return res;
   }
 }
+

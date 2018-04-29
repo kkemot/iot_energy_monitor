@@ -48,3 +48,4 @@
 //Power monitor
 #define POWER_MONITOR_1_TX 4
 #define POWER_MONITOR_1_RX 5
+
