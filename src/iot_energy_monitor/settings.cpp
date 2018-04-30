@@ -90,7 +90,7 @@ bool save_settings(void)
 {
     bool ret = false;
 
-    StaticJsonBuffer<400> json_buf;
+    StaticJsonBuffer<500> json_buf;
     JsonObject &json = json_buf.createObject();
     json["ssid_sta"] = settings.ssid_sta;
     json["pass_sta"] = settings.pass_sta;
@@ -123,7 +123,7 @@ bool load_settings(void)
 {
   char buf[2048];
   const char *tmp;
-  StaticJsonBuffer<400> json_buf;
+  StaticJsonBuffer<500> json_buf;
   bool ret = false;
   size_t size;
 

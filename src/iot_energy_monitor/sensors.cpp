@@ -22,8 +22,9 @@ void init_sensors(void) {
  int led_state = 0;
  pzem.setReadTimeout(1000);
 
-  //pzem.setAddress(ip);
+  pzem.setAddress(ip);
   //or:
+/*  
   while (!pzemrdy) {
     Serial.println("Connecting to PZEM...");
     pzemrdy = pzem.setAddress(ip);
@@ -40,9 +41,10 @@ void init_sensors(void) {
     }
   }
   digitalWrite(LED_PIN, LED_OFF);
+*/
 
   filter_size = (settings.sleep_time * SAMPLING_RATE) / 100;
-  Serial.print("Filter size is:");
+  Serial.print("Filter size for measured  data is:");
   Serial.println(filter_size);
 
   filter_voltage.setFilterSize(filter_size);
@@ -59,7 +61,7 @@ void energyMeter_clearBuffers(void) {
 }
 
 void energyMeter_read(void) {
-    Serial.println("Read V,I,P");
+//    Serial.println("Read V,I,P");
     float v, i, p;
     v = pzem.voltage(ip);
     if (v >= 0.0) {
@@ -75,12 +77,12 @@ void energyMeter_read(void) {
     if (p >= 0.0) {
       filter_power.add(p);
     }
-
-    Serial.print("V= ");
-    Serial.print(v);
-    Serial.print(", I= ");
-    Serial.print(i);
-    Serial.print(", P= ");
-    Serial.println(p);
+   
+//    Serial.print("V= ");
+//    Serial.print(v);
+//    Serial.print(", I= ");
+//    Serial.print(i);
+//    Serial.print(", P= ");
+//    Serial.println(p);
 }
 
