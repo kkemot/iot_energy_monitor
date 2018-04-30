@@ -61,13 +61,13 @@ void send_data_InfluxDB(float data_1, float data_2, float data_3) {
       if (influxdb.configure(settings.influxdb_db_name) != DB_SUCCESS) {
         Serial.println("Opend database failed(wrong: db)");
         return;
-    }
-    else {
+      }
+  }
+  else {
       if (influxdb.configure(settings.influxdb_db_name, settings.influxdb_user, settings.influxdb_pass) != DB_SUCCESS ) {
         Serial.println("Opend database failed(wrong: db, user or password)");
         return;
       }
-    }
   }
 
   // Create data object: series,tag=ta1,tag=tag2,tag=tag3 value=1.0, value=2.0
@@ -86,10 +86,10 @@ void send_data_InfluxDB(float data_1, float data_2, float data_3) {
     row.addField("I", temp); // Add value field
   }
 
-//  if (data_3 >= 0.0) {
+  if (data_3 >= 0.0) {
     sprintf(temp,"%.1f", data_3);
     row.addField("P", temp); // Add value field
-//  }
+  }
 
   Serial.println(influxdb.write(row) == DB_SUCCESS ? "Object write success"
                  : "Writing failed");
