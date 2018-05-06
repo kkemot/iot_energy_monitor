@@ -1,8 +1,8 @@
 #pragma once
 
 //Default settings:
-#define SSID_AP "**********"
-#define PASS_AP "**********"
+#define SSID_AP "NODEIOT"
+#define PASS_AP "ABC12345DEF"
 #define SSID_STA "**********"
 #define PASS_STA "**********"
 #define WIFIMODE_DEFAULT 0 //0 - WIFI_AP_STA; 1 - WIFI_STA; 2 - WIFI_STA_DEEP_SLEEP; 3 - WIFI_OFF
@@ -46,6 +46,6 @@
 #define LED_OFF     HIGH
 
 //Power monitor
-#define POWER_MONITOR_1_TX 4
-#define POWER_MONITOR_1_RX 5
+#define POWER_MONITOR_1_TX 4   //Arduino pin: D2
+#define POWER_MONITOR_1_RX 5   //Arduino pin: D1
 

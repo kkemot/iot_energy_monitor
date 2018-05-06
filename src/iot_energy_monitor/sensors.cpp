@@ -20,11 +20,11 @@ simpleFilter filter_power;
 
 void init_sensors(void) {
  int led_state = 0;
+ int tmp_counter = 60;
  pzem.setReadTimeout(1000);
 
-  pzem.setAddress(ip);
+  //pzem.setAddress(ip);
   //or:
-/*  
   while (!pzemrdy) {
     Serial.println("Connecting to PZEM...");
     pzemrdy = pzem.setAddress(ip);
@@ -39,9 +39,11 @@ void init_sensors(void) {
       digitalWrite(LED_PIN, LED_OFF);
       led_state = 0;
     }
+    tmp_counter--;
+    if (tmp_counter == 0)
+      break;
   }
   digitalWrite(LED_PIN, LED_OFF);
-*/
 
   filter_size = (settings.sleep_time * SAMPLING_RATE) / 100;
   Serial.print("Filter size for measured  data is:");
