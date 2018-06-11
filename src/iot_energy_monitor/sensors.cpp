@@ -7,7 +7,7 @@
 
 extern struct Settings settings;
 
-PZEM004T pzem(POWER_MONITOR_1_RX,POWER_MONITOR_1_TX);  // (RX,TX) connect to TX,RX of PZEM
+PZEM004T pzem(UART_RX,UART_TX);  // (RX,TX) connect to TX,RX of PZEM
 IPAddress ip(192,168,1,1);
 bool pzemrdy = false;
 
