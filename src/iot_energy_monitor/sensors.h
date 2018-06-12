@@ -7,6 +7,7 @@
 #define SAMPLING_RATE 20
 
 void init_sensors(void);
-void energyMeter_read(void);
+// returns number of values which was read  correctly
+int energyMeter_read(void);
 void energyMeter_clearBuffers(void);
 

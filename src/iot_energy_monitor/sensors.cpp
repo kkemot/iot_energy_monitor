@@ -62,23 +62,32 @@ void energyMeter_clearBuffers(void) {
   filter_power.clear();
 }
 
-void energyMeter_read(void) {
+int energyMeter_read(void) {
 //    Serial.println("Read V,I,P");
     float v, i, p;
-    v = pzem.voltage(ip);
-    if (v >= 0.0) {
-      filter_voltage.add(v);
-    }
+    int read_value_counter = 0;
 
     i = pzem.current(ip);
-    if (i >= 0.0) {
-      filter_current.add(i);
+    read_value_counter++;
+    if ((i < 0) || (i > 120)) {
+      return read_value_counter;
+    }
+
+    v = pzem.voltage(ip);
+    read_value_counter++;
+    if ((v < 0) || (v> 300)) {
+      return read_value_counter;
     }
 
     p = pzem.power(ip);
-    if (p >= 0.0) {
-      filter_power.add(p);
+    read_value_counter++;
+    if ((p<0) || (p > (v * i * 5)) {
+      return read_value_counter;
     }
+
+    filter_voltage.add(v);
+    filter_current.add(i);
+    filter_power.add(p);
    
 //    Serial.print("V= ");
 //    Serial.print(v);
@@ -86,5 +95,7 @@ void energyMeter_read(void) {
 //    Serial.print(i);
 //    Serial.print(", P= ");
 //    Serial.println(p);
+
+    return read_value_counter;
 }
 

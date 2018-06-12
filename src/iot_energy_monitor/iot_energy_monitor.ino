@@ -115,10 +115,11 @@ void loop() {
 
       //slot time for blinking code
       if ((_start_time >= 4) && (_end_time >= 4)) {
-        energyMeter_read();
-        counter_upload_delay -= 3;
-        counter_seconds += 3;
-        counter += 30;
+        // reading one value takes one second
+        int value_counter = energyMeter_read();
+        counter_upload_delay -= value_counter;
+        counter_seconds += value_counter;
+        counter += (value_counter * 10);
       }
       else {
         // no action here
