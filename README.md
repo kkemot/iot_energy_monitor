@@ -1,4 +1,6 @@
 # IOT Energy monitor
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fkkemot%2Fiot_energy_monitor.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fkkemot%2Fiot_energy_monitor?ref=badge_shield)
+
 Simple module based on open hardware devices: PZEM004T and ESP8266.
 The device allows to monitor power lines up to 100A and support external databases: ThingSpeak and Influx.
 Historical Voltage, current and active power samples provided by IOT module can be reused for creating graph, pie charts and statisstics. I recommend to use Grafana service which supports InfluxDB and allows for simple access to old measured datas.
@@ -43,3 +45,7 @@ Each wifi mode(WIFI_STA/WIFI_AP_STA/WIFI_AP) supports http server. It allows for
 - 192.168.4.1 for wifi network created by node(mode: WIFI_AP_STA, WIFI_AP)
 - assigned IP address(mode: WIFI_STA, WIFI_AP_STA).
 
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fkkemot%2Fiot_energy_monitor.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fkkemot%2Fiot_energy_monitor?ref=badge_large)
